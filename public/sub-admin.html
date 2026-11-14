@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sub Admin — BGI Live Pass</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#070d18">
+<script src="/assets/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0f1c; --card: #131a2b; --card2: #1a2338; --line: #24304d;
+    --txt: #e8edf7; --mut: #8fa0c0; --acc: #3ecfae; --acc2: #f0b429;
+    --danger: #f0566a; --blue: #60a5fa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--txt); min-height: 100vh; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; background: var(--bg); color: var(--txt); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14px; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--acc); }
+  label { font-size: 12px; color: var(--mut); display: block; margin-bottom: 5px; }
+  .btn { background: var(--acc); color: #06281f; border: none; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line); }
+  .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn.sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; z-index: 20; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+  .brand img { width: 30px; height: 30px; }
+  .brand .badge { font-size: 10px; background: rgba(62,207,174,0.14); color: var(--acc); padding: 3px 8px; border-radius: 999px; letter-spacing: 0.5px; }
+  .who { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--mut); }
+  .who b { color: var(--txt); }
+  nav { display: flex; gap: 4px; padding: 10px 20px; overflow-x: auto; border-bottom: 1px solid var(--line); background: var(--card); }
+  nav button { background: transparent; color: var(--mut); border: none; padding: 8px 14px; border-radius: 8px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+  nav button.active { background: var(--card2); color: var(--acc); }
+  main { padding: 20px; max-width: 1200px; margin: 0 auto; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .stat .n { font-size: 26px; font-weight: 700; }
+  .stat .l { font-size: 12px; color: var(--mut); margin-top: 4px; }
+  .stat.g .n { color: var(--acc); } .stat.y .n { color: var(--acc2); } .stat.r .n { color: var(--danger); } .stat.b .n { color: var(--blue); }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+  .panel h3 { font-size: 15px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+  .row > div { flex: 1; min-width: 130px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--mut); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill.active { background: rgba(62,207,174,0.14); color: var(--acc); }
+  .pill.checked_in { background: rgba(96,165,250,0.14); color: var(--blue); }
+  .pill.checked_out { background: rgba(240,180,41,0.14); color: var(--acc2); }
+  .pill.blocked { background: rgba(240,86,106,0.14); color: var(--danger); }
+  .pill.ok { background: rgba(62,207,174,0.14); color: var(--acc); }
+  .pill.failed { background: rgba(240,86,106,0.14); color: var(--danger); }
+  .pill.disabled { background: rgba(240,86,106,0.14); color: var(--danger); }
+  .pill.guard { background: rgba(96,165,250,0.14); color: var(--blue); }
+  .mut { color: var(--mut); font-size: 12px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--line); color: var(--txt); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 100; display: none; max-width: 90vw; }
+  .toast.err { border-color: var(--danger); color: var(--danger); }
+  .modal { position: fixed; inset: 0; background: rgba(4,8,16,0.75); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .modal.open { display: flex; }
+  .modal .box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto; }
+  .modal h3 { margin-bottom: 16px; }
+  .modal .f { margin-bottom: 12px; }
+  .qrbox { text-align: center; }
+  .qrbox img { width: 220px; height: 220px; image-rendering: pixelated; background: #fff; padding: 8px; border-radius: 8px; }
+  .qrbox .pn { font-family: monospace; font-size: 16px; margin-top: 8px; letter-spacing: 1px; }
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px; width: 100%; max-width: 380px; text-align: center; }
+  .login-box img { width: 60px; height: 60px; margin-bottom: 12px; }
+  .login-box h1 { font-size: 20px; margin-bottom: 4px; }
+  .login-box .sub { color: var(--mut); font-size: 13px; margin-bottom: 22px; }
+  .login-box .f { margin-bottom: 14px; text-align: left; }
+  .empty { text-align: center; color: var(--mut); padding: 30px 10px; font-size: 14px; }
+  .scroll { overflow-x: auto; }
+  .flex { display: flex; gap: 8px; align-items: center; }
+  .zone-name { color: var(--acc); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login-wrap">
+  <div class="login-box">
+    <img src="icon.svg" alt="BGI">
+    <h1>BGI Live Pass</h1>
+    <div class="sub">Sub Admin (Zone Admin) Portal</div>
+    <form id="loginForm">
+      <div class="f"><label>Username</label><input id="loginUser" autocomplete="username" required></div>
+      <div class="f"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" required></div>
+      <button class="btn" style="width:100%" type="submit">Login</button>
+    </form>
+    <div class="mut" style="margin-top:16px">Master Admin? <a href="/admin.html" style="color:var(--acc)">Master app</a> · Guard? <a href="/guard.html" style="color:var(--acc)">Guard app</a></div>
+  </div>
+</div>
+
+<div id="appView" style="display:none">
+  <header>
+    <div class="brand"><img src="icon.svg" alt="">BGI Live Pass <span class="badge">SUB ADMIN</span></div>
+    <div class="who"><b id="whoName"></b><span class="zone-name" id="whoZone"></span><button class="btn ghost sm" id="logoutBtn">Logout</button></div>
+  </header>
+  <nav>
+    <button data-view="dashboard" class="active">Dashboard</button>
+    <button data-view="guards">My Guards</button>
+    <button data-view="passes">Passes</button>
+    <button data-view="activity">Activity</button>
+  </nav>
+  <main>
+    <section id="v-dashboard">
+      <div class="panel">
+        <h3>My Zone: <span class="zone-name" id="zoneTitle"></span></h3>
+        <div class="cards" id="statCards"></div>
+      </div>
+      <div class="panel">
+        <h3>Recent Activity (live)</h3>
+        <div class="scroll"><table id="dashActivity"></table></div>
+      </div>
+    </section>
+
+    <section id="v-guards" style="display:none">
+      <div class="panel">
+        <h3><span>Add Guard</span></h3>
+        <form id="guardForm" class="row">
+          <div><label>Full Name</label><input id="gName" required></div>
+          <div><label>Username</label><input id="gUser" required style="text-transform:lowercase"></div>
+          <div><label>Password</label><input id="gPass" required></div>
+          <div><label>Phone</label><input id="gPhone"></div>
+          <div style="flex:0"><button class="btn">Add</button></div>
+        </form>
+      </div>
+      <div class="panel"><h3>Guards in my zone</h3><div class="scroll"><table id="guardList"></table></div></div>
+    </section>
+
+    <section id="v-passes" style="display:none">
+      <div class="panel">
+        <h3><span>Passes — all zones (edit: my zone only)</span>
+          <span class="flex">
+            <button class="btn ghost sm" id="bulkBtn">Bulk Import</button>
+            <button class="btn sm" id="newPassBtn">+ New Pass</button>
+          </span>
+        </h3>
+        <div class="row" style="margin-bottom:14px">
+          <div><input id="passSearch" placeholder="Search pass no / name / phone / group"></div>
+          <div><select id="passZone"><option value="">All zones</option></select></div>
+          <div><select id="passStatus"><option value="">All status</option><option value="active">active</option><option value="checked_in">checked_in</option><option value="checked_out">checked_out</option><option value="blocked">blocked</option></select></div>
+        </div>
+        <div class="scroll"><table id="passList"></table></div>
+      </div>
+    </section>
+
+    <section id="v-activity" style="display:none">
+      <div class="panel">
+        <h3>Scan Activity <button class="btn ghost sm" id="actRefresh">Refresh</button></h3>
+        <div class="scroll"><table id="actList"></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+let token = localStorage.getItem("bgi_token") || "";
+let me = null;
+let events = [];
+
+async function api(path, opts = {}) {
+  const res = await fetch("/api" + path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}), ...(opts.headers || {}) },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { logout(); throw new Error(data.error || "Unauthorized"); }
+  if (!res.ok) throw new Error(data.error || "Error " + res.status);
+  return data;
+}
+
+function toast(msg, err = false) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = "toast" + (err ? " err" : "");
+  t.style.display = "block";
+  clearTimeout(t._t);
+  t._t = setTimeout(() => (t.style.display = "none"), 2600);
+}
+
+function logout() {
+  token = "";
+  localStorage.removeItem("bgi_token");
+  localStorage.removeItem("bgi_me");
+  $("#appView").style.display = "none";
+  $("#loginView").style.display = "flex";
+}
+
+function fmtTime(s) {
+  if (!s) return "-";
+  const d = new Date(s);
+  return d.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function openModal(html) {
+  $("#modalBox").innerHTML = html;
+  $("#modal").classList.add("open");
+}
+function closeModal() { $("#modal").classList.remove("open"); }
+$("#modal").addEventListener("click", (e) => { if (e.target === $("#modal")) closeModal(); });
+
+$("#loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    const data = await api("/login", { method: "POST", body: { username: $("#loginUser").value, password: $("#loginPass").value } });
+    token = data.token;
+    me = data.user;
+    localStorage.setItem("bgi_token", token);
+    localStorage.setItem("bgi_me", JSON.stringify(me));
+    if (me.role === "guard") { location.href = "/guard.html"; return; }
+    if (me.role === "master") { location.href = "/admin.html"; return; }
+    startApp();
+  } catch (err) { toast(err.message, true); }
+});
+
+$("#logoutBtn").addEventListener("click", async () => { try { await api("/logout", { method: "POST" }); } catch {} logout(); });
+
+async function startApp() {
+  $("#loginView").style.display = "none";
+  $("#appView").style.display = "block";
+  $("#whoName").textContent = me.name;
+  const d = await api("/me");
+  $("#whoZone").textContent = d.zone ? " · " + d.zone.name : "";
+  $("#zoneTitle").textContent = d.zone ? d.zone.name : "—";
+  await loadEvents();
+  loadStats();
+  switchView("dashboard");
+  setInterval(() => { if (currentView === "dashboard") loadStats(); }, 15000);
+}
+
+let currentView = "dashboard";
+$$("nav button").forEach((b) => b.addEventListener("click", () => switchView(b.dataset.view)));
+function switchView(v) {
+  currentView = v;
+  $$("nav button").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
+  $$("main section").forEach((s) => (s.style.display = s.id === "v-" + v ? "block" : "none"));
+  if (v === "dashboard") loadStats();
+  if (v === "guards") loadGuards();
+  if (v === "passes") loadPasses();
+  if (v === "activity") loadActivity();
+}
+
+async function loadEvents() {
+  const data = await api("/events");
+  events = data.events.filter((e) => e.status === "active");
+}
+
+async function loadGuards() {
+  const data = await api("/users?role=guard");
+  const rows = data.users.map((g) => `<tr><td><b>${g.name}</b><br><span class="mut">${g.phone || "-"}</span></td><td>${g.username}</td>
+    <td><span class="pill ${g.status}">${g.status}</span></td>
+    <td class="flex"><button class="btn ghost sm" onclick="editGuard(${g.id})">Edit</button></td></tr>`).join("");
+  $("#guardList").innerHTML = `<tr><th>Name</th><th>Username</th><th>Status</th><th>Actions</th></tr>` + (rows || `<tr><td colspan="4" class="empty">No guards in my zone</td></tr>`);
+}
+$("#guardForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await api("/users", { method: "POST", body: { name: $("#gName").value, username: $("#gUser").value, password: $("#gPass").value, role: "guard", phone: $("#gPhone").value } });
+    toast("Guard added");
+    $("#guardForm").reset();
+    loadGuards();
+  } catch (err) { toast(err.message, true); }
+});
+window.editGuard = async (id) => {
+  const d = await api("/users?role=guard");
+  const g = d.users.find((x) => x.id === id);
+  if (!g) return;
+  openModal(`<h3>Edit Guard — ${g.name}</h3>
+    <div class="f"><label>Name</label><input id="mgName" value="${g.name}"></div>
+    <div class="f"><label>Phone</label><input id="mgPhone" value="${g.phone || ""}"></div>
+    <div class="f"><label>Status</label><select id="mgStatus"><option value="active" ${g.status === "active" ? "selected" : ""}>active</option><option value="disabled" ${g.status === "disabled" ? "selected" : ""}>disabled</option></select></div>
+      <div class="f"><label>New Password (leave blank to keep unchanged)</label><input id="mgPass" type="password" placeholder="optional"></div>
+    <div class="flex"><button class="btn" onclick="saveGuard(${id})">Save</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+};
+window.saveGuard = async (id) => {
+  const body = { name: $("#mgName").value, phone: $("#mgPhone").value, status: $("#mgStatus").value };
+  if ($("#mgPass").value) body.password = $("#mgPass").value;
+  try {
+    await api("/users/" + id, { method: "PUT", body });
+    closeModal(); toast("Guard updated"); loadGuards();
+  } catch (err) { toast(err.message, true); }
+};
+
+async function loadPasses() {
+  const sel = $("#passZone").value;
+  const zdata = await api("/zones");
+  const zopts = `<option value="">All zones</option>` + zdata.zones.map((z) => `<option value="${z.id}">${z.name}</option>`).join("");
+  $("#passZone").innerHTML = zopts;
+  $("#passZone").value = sel;
+  const p = [];
+  if ($("#passSearch").value) p.push("q=" + encodeURIComponent($("#passSearch").value));
+  if ($("#passZone").value) p.push("zone=" + $("#passZone").value);
+  if ($("#passStatus").value) p.push("status=" + $("#passStatus").value);
+  const data = await api("/passes" + (p.length ? "?" + p.join("&") : ""));
+  const rows = data.passes.map((r) => `<tr><td style="font-family:monospace">${r.passNo}</td><td><b>${r.name}</b><br><span class="mut">${r.phone || "-"}</span></td>
+    <td>${r.group || "-"}</td><td>${r.zone_name || "-"}</td><td>${r.event_name || "-"}</td>
+    <td><span class="pill ${r.status}">${r.status}</span></td>
+    <td class="flex"><button class="btn ghost sm" onclick="showQR(${r.id})">QR</button>
+    <button class="btn ghost sm" onclick="editPass(${r.id})">Edit</button>
+    <button class="btn danger sm" onclick="delPass(${r.id})">Delete</button></td></tr>`).join("");
+  $("#passList").innerHTML = `<tr><th>Pass No</th><th>Name</th><th>Group</th><th>Zone</th><th>Event</th><th>Status</th><th>Actions</th></tr>` + (rows || `<tr><td colspan="7" class="empty">No passes found</td></tr>`);
+}
+$("#passSearch").addEventListener("input", debounce(loadPasses, 300));
+$("#passZone").addEventListener("change", loadPasses);
+$("#passStatus").addEventListener("change", loadPasses);
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+async function fetchPasses() { return (await api("/passes")).passes; }
+
+window.showQR = async (id) => {
+  const all = await fetchPasses();
+  const p = all.find((x) => x.id === id);
+  if (!p) return;
+  const qr = qrcode(0, "M");
+  qr.addData(p.passNo);
+  qr.make();
+  openModal(`<div class="qrbox"><h3>Pass QR</h3><img src="${qr.createDataURL(8, 8)}" alt="QR"><div class="pn">${p.passNo}</div>
+    <p class="mut">${p.name} — ${p.event_name || ""}</p>
+    <p class="mut" style="margin-top:8px">Share this QR with the mumin or print it.</p>
+    <div class="flex" style="margin-top:14px;justify-content:center"><button class="btn ghost" onclick="closeModal()">Close</button></div></div>`);
+};
+window.editPass = async (id) => {
+  const all = await fetchPasses();
+  const p = all.find((x) => x.id === id);
+  if (!p) return;
+  openModal(`<h3>Edit Pass — ${p.passNo}</h3>
+    <div class="f"><label>Name</label><input id="mpName" value="${p.name}"></div>
+    <div class="f"><label>Phone</label><input id="mpPhone" value="${p.phone || ""}"></div>
+    <div class="f"><label>Group</label><input id="mpGroup" value="${p.group || ""}"></div>
+    <div class="f"><label>Status</label><select id="mpStatus"><option value="active" ${p.status === "active" ? "selected" : ""}>active</option><option value="checked_in" ${p.status === "checked_in" ? "selected" : ""}>checked_in</option><option value="checked_out" ${p.status === "checked_out" ? "selected" : ""}>checked_out</option><option value="blocked" ${p.status === "blocked" ? "selected" : ""}>blocked</option></select></div>
+    <div class="f"><label>Note</label><input id="mpNote" value="${p.note || ""}"></div>
+    <div class="flex"><button class="btn" onclick="savePass(${id})">Save</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+};
+window.savePass = async (id) => {
+  try {
+    await api("/passes/" + id, { method: "PUT", body: { name: $("#mpName").value, phone: $("#mpPhone").value, group: $("#mpGroup").value, status: $("#mpStatus").value, note: $("#mpNote").value } });
+    closeModal(); toast("Pass updated"); loadPasses();
+  } catch (err) { toast(err.message, true); }
+};
+window.delPass = async (id) => {
+  if (!confirm("Delete pass?")) return;
+  try { await api("/passes/" + id, { method: "DELETE" }); toast("Pass deleted"); loadPasses(); }
+  catch (err) { toast(err.message, true); }
+};
+
+$("#newPassBtn").addEventListener("click", () => {
+  const eopts = events.map((e) => `<option value="${e.id}">${e.name}</option>`).join("");
+  openModal(`<h3>New Pass</h3>
+    <div class="f"><label>Event</label><select id="npEvent">${eopts}</select></div>
+    <div class="f"><label>Name</label><input id="npName" required></div>
+    <div class="f"><label>Phone</label><input id="npPhone"></div>
+    <div class="f"><label>Group</label><input id="npGroup" placeholder="e.g. Family / Jamat"></div>
+    <div class="f"><label>Pass No (leave blank to auto-generate)</label><input id="npPassNo"></div>
+    <div class="flex"><button class="btn" onclick="createPass()">Create</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+});
+window.createPass = async () => {
+  try {
+    const d = await api("/passes", { method: "POST", body: {
+      event_id: $("#npEvent").value, name: $("#npName").value, phone: $("#npPhone").value,
+      group: $("#npGroup").value, pass_no: $("#npPassNo").value } });
+    closeModal(); toast("Pass created: " + d.pass.passNo);
+    loadPasses();
+    setTimeout(() => {
+      const qr = qrcode(0, "M");
+      qr.addData(d.pass.passNo);
+      qr.make();
+      openModal(`<div class="qrbox"><h3>Pass Created — QR</h3><img src="${qr.createDataURL(8, 8)}" alt="QR"><div class="pn">${d.pass.passNo}</div>
+        <p class="mut">${d.pass.name}</p>
+        <div class="flex" style="margin-top:14px;justify-content:center"><button class="btn ghost" onclick="closeModal();loadPasses()">Close</button></div></div>`);
+    }, 200);
+  } catch (err) { toast(err.message, true); }
+};
+
+$("#bulkBtn").addEventListener("click", () => {
+  const eopts = events.map((e) => `<option value="${e.id}">${e.name}</option>`).join("");
+  openModal(`<h3>Bulk Import Passes (my zone)</h3>
+    <div class="f"><label>Event</label><select id="biEvent">${eopts}</select></div>
+    <div class="f"><label>Lines — format: <code>name, phone, group, note</code></label>
+    <textarea id="biText" rows="8" placeholder="Ali Raza, 9876543210, Family A&#10;Fatema M, 9123456780, Jamat B"></textarea></div>
+    <div class="flex"><button class="btn" onclick="bulkImport()">Import</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
+});
+window.bulkImport = async () => {
+  try {
+    const d = await api("/passes/bulk", { method: "POST", body: { event_id: $("#biEvent").value, text: $("#biText").value } });
+    closeModal(); toast("Imported: " + d.created + " passes");
+    loadPasses();
+  } catch (err) { toast(err.message, true); }
+};
+
+async function loadStats() {
+  try {
+    const d = await api("/stats");
+    $("#statCards").innerHTML = `
+      <div class="stat g"><div class="n">${d.total_passes}</div><div class="l">My Zone Passes</div></div>
+      <div class="stat b"><div class="n">${d.inside}</div><div class="l">Inside</div></div>
+      <div class="stat y"><div class="n">${d.out}</div><div class="l">Exited</div></div>
+      <div class="stat r"><div class="n">${d.blocked}</div><div class="l">Blocked</div></div>
+      <div class="stat"><div class="n">${d.today_scans}</div><div class="l">Scans Today</div></div>
+      <div class="stat"><div class="n">${d.active_guards}</div><div class="l">My Guards</div></div>`;
+    $("#dashActivity").innerHTML = `<tr><th>Time</th><th>Mumin</th><th>Pass No</th><th>Type</th><th>Result</th><th>Guard</th></tr>` +
+      (d.recent_scans.slice(0, 10).map((s) => `<tr><td class="mut">${fmtTime(s.createdAt)}</td><td>${s.pass_name}</td>
+      <td style="font-family:monospace">${s.pass_no || "—"}</td>
+      <td>${s.type === "entry" ? "⬇ Entry" : "⬆ Exit"}</td>
+      <td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${s.result}</span></td>
+      <td>${s.guard_name}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">No scans yet</td></tr>`);
+  } catch (err) { console.error(err); }
+}
+async function loadActivity() {
+  const d = await api("/stats");
+  $("#actList").innerHTML = `<tr><th>Time</th><th>Mumin</th><th>Pass No</th><th>Type</th><th>Result</th><th>Guard</th></tr>` +
+    (d.recent_scans.map((s) => `<tr><td class="mut">${fmtTime(s.createdAt)}</td><td>${s.pass_name}</td>
+    <td style="font-family:monospace">${s.pass_no || "—"}</td>
+    <td>${s.type === "entry" ? "⬇ Entry" : "⬆ Exit"}</td>
+    <td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${s.result}</span></td>
+    <td>${s.guard_name}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">No scans yet</td></tr>`);
+}
+$("#actRefresh").addEventListener("click", loadActivity);
+
+(async () => {
+  if (!token) return;
+  try {
+    const d = await api("/me");
+    me = d.user;
+    if (me.role === "guard") { location.href = "/guard.html"; return; }
+    if (me.role === "master") { location.href = "/admin.html"; return; }
+    startApp();
+  } catch { logout(); }
+})();
+</script>
+<script src="/assets/app-install.js"></script>
+</body>
+</html>

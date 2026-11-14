@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guard — BGI Live Pass</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#070d18">
+<script src="/assets/jsQR.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0f1c; --card: #131a2b; --card2: #1a2338; --line: #24304d;
+    --txt: #e8edf7; --mut: #8fa0c0; --acc: #3ecfae; --acc2: #f0b429;
+    --danger: #f0566a; --blue: #60a5fa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--txt); min-height: 100vh; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; background: var(--bg); color: var(--txt); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14px; width: 100%; }
+  input:focus { outline: none; border-color: var(--acc); }
+  label { font-size: 12px; color: var(--mut); display: block; margin-bottom: 5px; }
+  .btn { background: var(--acc); color: #06281f; border: none; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line); }
+  .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn.sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; z-index: 20; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .brand img { width: 28px; height: 28px; }
+  .who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mut); }
+  .who b { color: var(--txt); }
+  main { padding: 16px; max-width: 640px; margin: 0 auto; padding-bottom: 90px; }
+  .mode-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+  .mode-toggle button { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--mut); font-size: 15px; font-weight: 700; }
+  .mode-toggle button.entry.active { background: rgba(62,207,174,0.18); color: var(--acc); border-color: var(--acc); }
+  .mode-toggle button.exit.active { background: rgba(240,180,41,0.18); color: var(--acc2); border-color: var(--acc2); }
+  .camera-wrap { position: relative; background: #000; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); margin-bottom: 14px; }
+  .camera-wrap video { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+  .camera-wrap canvas { display: none; }
+  .cam-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; background: rgba(4,8,16,0.85); color: var(--mut); font-size: 14px; text-align: center; padding: 16px; }
+  .scanline { position: absolute; left: 8%; right: 8%; top: 48%; height: 3px; background: var(--acc); border-radius: 3px; box-shadow: 0 0 14px var(--acc); animation: scan 2.2s ease-in-out infinite; opacity: 0.85; }
+  @keyframes scan { 0% { top: 30%; } 50% { top: 66%; } 100% { top: 30%; } }
+  .result { border-radius: 14px; padding: 18px; margin-bottom: 14px; display: none; border: 1px solid; }
+  .result.ok { background: rgba(62,207,174,0.1); border-color: var(--acc); }
+  .result.fail { background: rgba(240,86,106,0.1); border-color: var(--danger); }
+  .result .big { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+  .result.ok .big { color: var(--acc); }
+  .result.fail .big { color: var(--danger); }
+  .result .info { margin-top: 8px; font-size: 14px; color: var(--txt); line-height: 1.6; }
+  .result .info b { color: var(--txt); }
+  .result .info .mut { color: var(--mut); }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .panel h3 { font-size: 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--mut); font-weight: 600; padding: 7px 8px; border-bottom: 1px solid var(--line); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 8px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill.ok { background: rgba(62,207,174,0.14); color: var(--acc); }
+  .pill.failed { background: rgba(240,86,106,0.14); color: var(--danger); }
+  .pill.active { background: rgba(62,207,174,0.14); color: var(--acc); }
+  .pill.checked_in { background: rgba(96,165,250,0.14); color: var(--blue); }
+  .pill.checked_out { background: rgba(240,180,41,0.14); color: var(--acc2); }
+  .pill.blocked { background: rgba(240,86,106,0.14); color: var(--danger); }
+  .mut { color: var(--mut); font-size: 12px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--line); color: var(--txt); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 100; display: none; max-width: 90vw; }
+  .toast.err { border-color: var(--danger); color: var(--danger); }
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px; width: 100%; max-width: 380px; text-align: center; }
+  .login-box img { width: 60px; height: 60px; margin-bottom: 12px; }
+  .login-box h1 { font-size: 20px; margin-bottom: 4px; }
+  .login-box .sub { color: var(--mut); font-size: 13px; margin-bottom: 22px; }
+  .login-box .f { margin-bottom: 14px; text-align: left; }
+  .empty { text-align: center; color: var(--mut); padding: 24px 8px; font-size: 14px; }
+  .flex { display: flex; gap: 8px; align-items: center; }
+  .beep { display: none; }
+  .manual-row { display: flex; gap: 8px; }
+  .manual-row input { flex: 1; }
+  .beep-once { animation: pulse 0.4s; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login-wrap">
+  <div class="login-box">
+    <img src="icon.svg" alt="BGI">
+    <h1>BGI Live Pass</h1>
+    <div class="sub">Guard App — Entry/Exit Scanner</div>
+    <form id="loginForm">
+      <div class="f"><label>Username</label><input id="loginUser" autocomplete="username" required></div>
+      <div class="f"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" required></div>
+      <button class="btn" style="width:100%" type="submit">Login</button>
+    </form>
+    <div class="mut" style="margin-top:16px">Admin? <a href="/admin.html" style="color:var(--acc)">Master app</a> · <a href="/sub-admin.html" style="color:var(--acc)">Sub Admin app</a></div>
+  </div>
+</div>
+
+<div id="appView" style="display:none">
+  <header>
+    <div class="brand"><img src="icon.svg" alt="">BGI Live Pass · Guard</div>
+    <div class="who"><b id="whoName"></b><span class="mut" id="whoZone"></span><button class="btn ghost sm" id="logoutBtn">Logout</button></div>
+  </header>
+  <main>
+    <div class="mode-toggle">
+      <button class="entry active" id="modeEntry">⬇ ENTRY</button>
+      <button class="exit" id="modeExit">⬆ EXIT</button>
+    </div>
+
+    <div class="camera-wrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div class="cam-off" id="camOff">
+        <div>📷 Camera band hai</div>
+        <button class="btn" id="startCamBtn">Camera Start</button>
+      </div>
+      <div class="scanline" id="scanline" style="display:none"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Manual Check</h3>
+      <div class="manual-row">
+        <input id="manualPass" placeholder="Pass No (e.g. PX1A2B3C)" style="text-transform:uppercase">
+        <button class="btn" id="manualBtn" style="flex:0">Check</button>
+      </div>
+    </div>
+
+    <div class="result" id="result"></div>
+
+    <div class="panel">
+      <h3>Lookup Pass</h3>
+      <div class="manual-row">
+        <input id="lookupPass" placeholder="Pass No lookup" style="text-transform:uppercase">
+        <button class="btn ghost" id="lookupBtn" style="flex:0">Lookup</button>
+      </div>
+      <div id="lookupResult" style="margin-top:10px"></div>
+    </div>
+
+    <div class="panel">
+      <h3>My Recent Scans <button class="btn ghost sm" id="refreshBtn">Refresh</button></h3>
+      <div class="scroll"><table id="scanList"></table></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="beepOk" class="beep" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+<audio id="beepErr" class="beep" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let token = localStorage.getItem("bgi_token") || "";
+let me = null;
+let mode = "entry";
+let scanning = false;
+let lastScan = "";
+let recentScans = [];
+
+async function api(path, opts = {}) {
+  const res = await fetch("/api" + path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}), ...(opts.headers || {}) },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && !path.startsWith("/login")) { logout(); throw new Error(data.error || "Unauthorized"); }
+  if (!res.ok && !res.json) throw new Error(data.error || "Error " + res.status);
+  return data;
+}
+
+function toast(msg, err = false) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = "toast" + (err ? " err" : "");
+  t.style.display = "block";
+  clearTimeout(t._t);
+  t._t = setTimeout(() => (t.style.display = "none"), 2600);
+}
+
+function logout() {
+  token = "";
+  stopCamera();
+  localStorage.removeItem("bgi_token");
+  localStorage.removeItem("bgi_me");
+  $("#appView").style.display = "none";
+  $("#loginView").style.display = "flex";
+}
+
+function fmtTime(s) {
+  if (!s) return "-";
+  const d = new Date(s);
+  return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+}
+
+function beep(ok) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = ok ? 880 : 220;
+    g.gain.value = 0.15;
+    o.start();
+    o.stop(ctx.currentTime + (ok ? 0.12 : 0.35));
+    setTimeout(() => ctx.close(), 500);
+  } catch {}
+}
+
+/* ---- login ---- */
+$("#loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    const data = await api("/login", { method: "POST", body: { username: $("#loginUser").value, password: $("#loginPass").value } });
+    token = data.token;
+    me = data.user;
+    localStorage.setItem("bgi_token", token);
+    localStorage.setItem("bgi_me", JSON.stringify(me));
+    if (me.role === "master") { location.href = "/admin.html"; return; }
+    if (me.role === "sub_admin") { location.href = "/sub-admin.html"; return; }
+    startApp();
+  } catch (err) { toast(err.message, true); }
+});
+
+$("#logoutBtn").addEventListener("click", async () => { try { await api("/logout", { method: "POST" }); } catch {} logout(); });
+
+async function startApp() {
+  $("#loginView").style.display = "none";
+  $("#appView").style.display = "block";
+  $("#whoName").textContent = me.name;
+  try {
+    const d = await api("/me");
+    $("#whoZone").textContent = d.zone ? " · " + d.zone.name : "";
+  } catch {}
+  loadRecent();
+  $("#startCamBtn").addEventListener("click", startCamera);
+  startCamera();
+}
+
+/* ---- mode ---- */
+$("#modeEntry").addEventListener("click", () => setMode("entry"));
+$("#modeExit").addEventListener("click", () => setMode("exit"));
+function setMode(m) {
+  mode = m;
+  $("#modeEntry").classList.toggle("active", m === "entry");
+  $("#modeExit").classList.toggle("active", m === "exit");
+}
+
+/* ---- camera ---- */
+let video = null;
+let stream = null;
+async function startCamera() {
+  video = $("#video");
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
+    video.srcObject = stream;
+    await video.play();
+    $("#camOff").style.display = "none";
+    $("#scanline").style.display = "block";
+    scanning = true;
+    tick();
+  } catch (err) {
+    $("#camOff").querySelector("div").textContent = "Camera access failed: " + err.message;
+    toast("Camera access not available", true);
+  }
+}
+function stopCamera() {
+  scanning = false;
+  if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+}
+
+const canvas = document.createElement("canvas");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+async function tick() {
+  if (!scanning || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+    if (scanning) requestAnimationFrame(tick);
+    return;
+  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  if (!canvas.width) { requestAnimationFrame(tick); return; }
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let code = null;
+  try {
+    if (window.jsQR) code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+  } catch {}
+  if (code && code.data) {
+    const now = Date.now();
+    if (code.data !== lastScan || now - lastScanTime > 3000) {
+      lastScan = code.data;
+      lastScanTime = now;
+      doScan(code.data);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+let lastScanTime = 0;
+
+/* ---- scan ---- */
+async function doScan(passNo) {
+  passNo = String(passNo).trim();
+  if (!passNo) return;
+  const type = mode;
+  try {
+    const res = await fetch("/api/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ pass_no: passNo, type }),
+    });
+    const data = await res.json();
+    if (res.status === 404) {
+      showResult(false, "❌ PASS NOT FOUND", `Pass no <b>${passNo}</b> was not found in the system. Check the manual entry list or contact the admin.`);
+      beep(false);
+      return;
+    }
+    if (data.ok) {
+      const p = data.pass;
+      showResult(true, `✅ ${data.message}`, `
+        <b>${p.name}</b> <span class="mut">(${p.passNo})</span><br>
+        Group: ${p.group || "-"} · Zone: ${p.zoneName || "-"} · Event: ${p.eventName || "-"}<br>
+        Status: <span class="pill ${p.status}">${p.status}</span>`);
+      beep(true);
+    } else {
+      showResult(false, `⛔ ${data.message || "Entry denied"}`, `
+        <b>${p.name}</b> <span class="mut">(${p.passNo})</span><br>
+        Status: <span class="pill ${p.status}">${p.status}</span>`);
+      beep(false);
+    }
+    loadRecent();
+  } catch (err) {
+    if (err.message !== "Unauthorized") toast(err.message, true);
+  }
+}
+
+function showResult(ok, title, info) {
+  const r = $("#result");
+  r.className = "result " + (ok ? "ok" : "fail");
+  r.innerHTML = `<div class="big">${title}</div><div class="info">${info}</div>`;
+  r.style.display = "block";
+  r.classList.add("beep-once");
+  setTimeout(() => r.classList.remove("beep-once"), 400);
+  clearTimeout(r._t);
+  r._t = setTimeout(() => { r.style.display = "none"; }, 6000);
+}
+
+$("#manualBtn").addEventListener("click", () => { doScan($("#manualPass").value); $("#manualPass").value = ""; });
+$("#manualPass").addEventListener("keydown", (e) => { if (e.key === "Enter") { doScan($("#manualPass").value); $("#manualPass").value = ""; } });
+
+/* ---- lookup ---- */
+$("#lookupBtn").addEventListener("click", async () => {
+  const pn = $("#lookupPass").value.trim();
+  if (!pn) return;
+  $("#lookupPass").value = "";
+  try {
+    const d = await api("/scan/" + encodeURIComponent(pn));
+    const p = d.pass;
+    const recent = d.recent.map((s) => `<tr><td>${fmtTime(s.createdAt)}</td><td>${s.type === "entry" ? "⬇" : "⬆"}</td><td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${s.result}</span></td></tr>`).join("");
+    $("#lookupResult").innerHTML = `
+      <b>${p.name}</b> <span class="mut">(${p.passNo})</span><br>
+      Group: ${p.group || "-"} · Phone: ${p.phone || "-"}<br>
+      Status: <span class="pill ${p.status}">${p.status}</span>
+      ${recent ? `<table style="margin-top:8px"><tr><th>Time</th><th>Type</th><th>Result</th></tr>${recent}</table>` : ""}`;
+  } catch (err) {
+    $("#lookupResult").innerHTML = `<span class="mut" style="color:var(--danger)">${err.message}</span>`;
+  }
+});
+
+/* ---- recent scans ---- */
+async function loadRecent() {
+  try {
+    const d = await api("/stats");
+    $("#scanList").innerHTML = `<tr><th>Time</th><th>Mumin</th><th>Pass No</th><th>Type</th><th>Result</th></tr>` +
+      (d.recent_scans.map((s) => `<tr><td class="mut">${fmtTime(s.createdAt)}</td><td>${s.pass_name}</td>
+      <td style="font-family:monospace">${s.pass_no || "—"}</td>
+      <td>${s.type === "entry" ? "⬇ Entry" : "⬆ Exit"}</td>
+      <td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${s.result}</span></td></tr>`).join("") || `<tr><td colspan="5" class="empty">No scans yet</td></tr>`);
+  } catch (err) { console.error(err); }
+}
+$("#refreshBtn").addEventListener("click", loadRecent);
+
+(async () => {
+  if (!token) return;
+  try {
+    const d = await api("/me");
+    me = d.user;
+    if (me.role === "master") { location.href = "/admin.html"; return; }
+    if (me.role === "sub_admin") { location.href = "/sub-admin.html"; return; }
+    startApp();
+  } catch { logout(); }
+})();
+</script>
+<script src="/assets/app-install.js"></script>
+</body>
+</html>

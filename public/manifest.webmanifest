@@ -1,0 +1,51 @@
+{
+  "id": "bgi-live-pass",
+  "name": "BGI Live Pass — Event Pass Management",
+  "short_name": "BGI Live Pass",
+  "description": "Event entry/exit pass management system for Master Admin, Sub Admin and Guard.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#070d18",
+  "theme_color": "#070d18",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Guard Scanner",
+      "url": "./guard.html"
+    },
+    {
+      "name": "Master Admin",
+      "url": "./admin.html"
+    },
+    {
+      "name": "Sub Admin",
+      "url": "./sub-admin.html"
+    }
+  ]
+}

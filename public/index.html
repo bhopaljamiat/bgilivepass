@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BGI Live Pass — Event Management System</title>
+<meta name="description" content="BGI Live Pass: event pass management system for Master Admin, Sub Admin and Guard.">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#070d18">
+<style>
+  :root {
+    --bg: #0a0f1c;
+    --card: #131a2b;
+    --card2: #1a2338;
+    --line: #24304d;
+    --txt: #e8edf7;
+    --mut: #8fa0c0;
+    --acc: #3ecfae;
+    --acc2: #f0b429;
+    --danger: #f0566a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--txt);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .logo { width: 84px; height: 84px; margin-bottom: 16px; }
+  h1 { font-size: 28px; font-weight: 700; letter-spacing: 0.5px; }
+  .sub { color: var(--mut); margin: 8px 0 32px; text-align: center; font-size: 14px; max-width: 420px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; width: 100%; max-width: 860px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    text-decoration: none;
+    color: var(--txt);
+    transition: transform 0.15s, border-color 0.15s;
+    display: block;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--acc); }
+  .card .icon { font-size: 34px; margin-bottom: 12px; }
+  .card h2 { font-size: 18px; margin-bottom: 6px; }
+  .card p { color: var(--mut); font-size: 13px; line-height: 1.5; }
+  .card .tag {
+    display: inline-block; margin-top: 14px; font-size: 11px;
+    padding: 4px 10px; border-radius: 999px; letter-spacing: 0.5px;
+  }
+  .tag.master { background: rgba(240,180,41,0.14); color: var(--acc2); }
+  .tag.sub { background: rgba(62,207,174,0.14); color: var(--acc); }
+  .tag.guard { background: rgba(96,165,250,0.14); color: #60a5fa; }
+  footer { margin-top: 40px; color: var(--mut); font-size: 12px; text-align: center; line-height: 1.7; }
+</style>
+</head>
+<body>
+  <img class="logo" src="icon.svg" alt="BGI Live Pass">
+  <h1>BGI Live Pass</h1>
+  <p class="sub">Event pass management system — entry/exit tracking, zone-wise duties and live monitoring. Select your portal.</p>
+  <div class="grid">
+    <a class="card" href="/admin.html">
+      <div class="icon">👑</div>
+      <h2>Master Admin</h2>
+      <p>Zones, events, sub-admins, guards and all passes — the entire system in one place.</p>
+      <span class="tag master">MASTER ADMIN</span>
+    </a>
+    <a class="card" href="/sub-admin.html">
+      <div class="icon">🛡️</div>
+      <h2>Sub Admin</h2>
+      <p>Manage guards, passes and live activity for your zone.</p>
+      <span class="tag sub">ZONE ADMIN</span>
+    </a>
+    <a class="card" href="/guard.html">
+      <div class="icon">📋</div>
+      <h2>Guard</h2>
+      <p>Scan QR codes to verify mumin entry/exit — passes from any zone are accepted.</p>
+      <span class="tag guard">GUARD</span>
+    </a>
+    <a class="card" href="install.html">
+      <div class="icon">⬇️</div>
+      <h2>Install on PC</h2>
+      <p>Download and install the app on your Windows/Mac desktop — with a direct icon.</p>
+      <span class="tag sub">DOWNLOAD FOR PC</span>
+    </a>
+  </div>
+  <footer>
+    A mumin can enter from any zone — every guard can verify passes for all zones.<br>
+    © BGI Live Pass
+  </footer>
+  <script src="assets/app-install.js"></script>
+</body>
+</html>

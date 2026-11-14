@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BGI Live Pass — Install on PC</title>
+<meta name="description" content="How to install BGI Live Pass on your Windows PC.">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#070d18">
+<style>
+  :root {
+    --bg: #0a0f1c;
+    --card: #131a2b;
+    --card2: #1a2338;
+    --line: #24304d;
+    --txt: #e8edf7;
+    --mut: #8fa0c0;
+    --acc: #3ecfae;
+    --acc2: #f0b429;
+    --danger: #f0566a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--txt);
+    min-height: 100vh;
+    padding: 32px 20px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .top { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .top img { width: 52px; height: 52px; }
+  h1 { font-size: 24px; }
+  .sub { color: var(--mut); font-size: 14px; margin-bottom: 28px; }
+  .install-now {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--acc);
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 28px;
+  }
+  .install-now svg { flex-shrink: 0; }
+  .install-now p { font-size: 14px; color: var(--mut); }
+  .install-now strong { color: var(--acc); }
+  .section {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 20px 22px; margin-bottom: 16px;
+  }
+  .section h2 {
+    font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .section h2 .chip {
+    font-size: 10px; letter-spacing: 0.5px; padding: 3px 9px;
+    border-radius: 999px; background: rgba(62,207,174,0.14); color: var(--acc);
+  }
+  .section.windows h2 .chip { background: rgba(96,165,250,0.14); color: #60a5fa; }
+  .section.mobile h2 .chip { background: rgba(240,180,41,0.14); color: var(--acc2); }
+  ol { margin: 0; padding-right: 0; padding-left: 20px; }
+  li { color: var(--mut); font-size: 14px; line-height: 1.6; margin-bottom: 10px; }
+  li:last-child { margin-bottom: 0; }
+  li strong { color: var(--txt); }
+  .note {
+    margin-top: 12px; font-size: 12.5px; color: var(--mut);
+    background: var(--card2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; line-height: 1.6;
+  }
+  .note b { color: var(--acc); }
+  .benefit { display: flex; gap: 10px; font-size: 13.5px; color: var(--mut); margin-bottom: 8px; }
+  .benefit:last-child { margin-bottom: 0; }
+  .benefit .tick { color: var(--acc); font-weight: 700; }
+  .back {
+    display: inline-block; margin-top: 12px; color: var(--acc);
+    text-decoration: none; font-size: 14px; font-weight: 600;
+  }
+  .back:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <img src="icon.svg" alt="BGI Live Pass">
+    <div>
+      <h1>BGI Live Pass — Install on PC</h1>
+      <div class="sub">Download the app and get a direct icon on your Windows/Mac desktop.</div>
+    </div>
+  </div>
+
+  <div class="install-now">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#3ecfae" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>
+    </svg>
+    <p><strong>Easiest way:</strong> you will see the <strong>“Install App”</strong> button at the bottom-right of the screen — click it and confirm. The full app will be installed on your PC. <em>(Use the Chrome or Edge browser)</em></p>
+  </div>
+
+  <div class="section windows">
+    <h2>Windows PC <span class="chip">CHROME / EDGE</span></h2>
+    <ol>
+      <li>Open the site in <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.</li>
+      <li>Click the <strong>“Install App”</strong> button at the bottom-right — or click the <strong>install icon</strong> (⊕ / monitor icon) in the browser's address bar.</li>
+      <li>Click <strong>Install</strong> in the confirmation dialog.</li>
+      <li>A “BGI Live Pass” icon will appear on your <strong>Desktop</strong> and <strong>Start Menu</strong> — it opens like a regular app in its own full-screen window.</li>
+    </ol>
+    <div class="note"><b>Tip:</b> After installing, the app also opens offline — the login page and UI load instantly; internet is only needed for live data.</div>
+  </div>
+
+  <div class="section">
+    <h2>What you get</h2>
+    <div class="benefit"><span class="tick">✓</span><span>Desktop icon + Start Menu shortcut — no need to type the URL in the browser every day.</span></div>
+    <div class="benefit"><span class="tick">✓</span><span>Its own separate window — never mixes with your browser tabs.</span></div>
+    <div class="benefit"><span class="tick">✓</span><span>Fast loading — the app shell opens instantly from cache.</span></div>
+    <div class="benefit"><span class="tick">✓</span><span>Guard Scanner, Master Admin, Sub Admin — direct access from the Start Menu.</span></div>
+  </div>
+
+  <div class="section mobile">
+    <h2>Also on mobile <span class="chip">ANDROID / IPHONE</span></h2>
+    <ol>
+      <li><strong>Android (Chrome):</strong> tap the “Install App” button at the bottom-right, or Chrome menu (⋮) → “Add to Home screen”.</li>
+      <li><strong>iPhone (Safari):</strong> Share button <span style="color:#3ecfae">⎋</span> → “Add to Home Screen”.</li>
+    </ol>
+  </div>
+
+  <a class="back" href="./">← Back to Home</a>
+</div>
+<script src="assets/app-install.js"></script>
+</body>
+</html>

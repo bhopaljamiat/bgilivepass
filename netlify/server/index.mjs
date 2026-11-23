@@ -1,11 +1,13 @@
 import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/netlify-db";
-import { eq, and, or, desc, sql, count } from "drizzle-orm";
+import { eq, and, or, desc, sql, count, inArray } from "drizzle-orm";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import * as schema from "../../db/schema.ts";
+import { registerAccessRoutes } from "./access.mjs";
+import { registerDemoRoutes } from "./demo.mjs";
 
 const db = drizzle({ schema });
-const { users, zones, events, passes, scans, sessions, settings } = schema;
+const { users, zones, events, passes, scans, sessions, settings, gates, accessRules, passPresence } = schema;
 
 const app = new Hono();
 
@@ -35,6 +37,7 @@ const publicUser = (u) => ({
   role: u.role,
   phone: u.phone,
   zone_id: u.zoneId,
+  gate_id: u.gateId,
   status: u.status,
 });
 
@@ -57,6 +60,29 @@ async function auth(c, required) {
 }
 
 const bad = (c, msg, code = 400) => c.json({ error: msg }, code);
+
+// A guard's gate must exist and belong to the guard's zone (when a zone is set).
+async function resolveGate(v, zoneId) {
+  if (!v) return null;
+  const g = (await db.select().from(gates).where(eq(gates.id, Number(v))).limit(1))[0];
+  if (!g) return null;
+  if (zoneId && g.zoneId !== zoneId) return null;
+  return g.id;
+}
+
+// Access-related pass fields. Only the master admin may change who is allowed where.
+function passAccessFields(b, isMaster) {
+  const out = {};
+  const d = (v) => { if (!v) return null; const x = new Date(v); return isNaN(x) ? null : x; };
+  if (b.members !== undefined) out.members = Math.max(1, Math.floor(Number(b.members)) || 1);
+  if (!isMaster) return out;
+  if (b.profile_id !== undefined) out.profileId = b.profile_id ? Number(b.profile_id) : null;
+  if (b.access_mode === "all" || b.access_mode === "rules") out.accessMode = b.access_mode;
+  if (b.valid_from !== undefined) out.validFrom = d(b.valid_from);
+  if (b.valid_to !== undefined) out.validTo = d(b.valid_to);
+  if (b.max_entries !== undefined) out.maxEntries = b.max_entries === null || b.max_entries === "" ? null : Math.floor(Number(b.max_entries));
+  return out;
+}
 
 /* ---------- auth routes ---------- */
 
@@ -150,7 +176,7 @@ app.post("/api/zones", async (c) => {
   if (!name) return bad(c, "Zone name required");
   const rows = await db
     .insert(zones)
-    .values({ name, description: String(body.description || "") })
+    .values({ name, description: String(body.description || ""), capacity: Math.max(0, Math.floor(Number(body.capacity) || 0)) })
     .returning();
   return c.json({ zone: rows[0] });
 });
@@ -162,6 +188,7 @@ app.put("/api/zones/:id", async (c) => {
   const patch = {};
   if (body.name !== undefined) patch.name = String(body.name).trim();
   if (body.description !== undefined) patch.description = String(body.description);
+  if (body.capacity !== undefined) patch.capacity = Math.max(0, Math.floor(Number(body.capacity) || 0));
   const rows = await db
     .update(zones)
     .set(patch)
@@ -177,6 +204,15 @@ app.delete("/api/zones/:id", async (c) => {
   const id = Number(c.req.param("id"));
   const used = await db.select({ id: users.id }).from(users).where(eq(users.zoneId, id)).limit(1);
   if (used[0]) return bad(c, "This zone has users assigned — reassign them first");
+  const zg = await db.select({ id: gates.id }).from(gates).where(eq(gates.zoneId, id));
+  if (zg.length) {
+    const gi = zg.map((g) => g.id);
+    await db.update(users).set({ gateId: null }).where(inArray(users.gateId, gi));
+    await db.delete(accessRules).where(and(eq(accessRules.targetType, "gate"), inArray(accessRules.targetId, gi)));
+    await db.delete(gates).where(eq(gates.zoneId, id));
+  }
+  await db.delete(accessRules).where(and(eq(accessRules.targetType, "zone"), eq(accessRules.targetId, id)));
+  await db.delete(passPresence).where(eq(passPresence.zoneId, id));
   await db.delete(zones).where(eq(zones.id, id));
   return c.json({ ok: true });
 });
@@ -218,6 +254,7 @@ app.post("/api/users", async (c) => {
       username,
       passwordHash: hashPassword(password),
       zoneId,
+      gateId: await resolveGate(body.gate_id, zoneId),
       status: "active",
       createdBy: u.id,
     })
@@ -243,6 +280,7 @@ app.put("/api/users/:id", async (c) => {
     if (u.role === "sub_admin") return bad(c, "Not allowed", 403);
     patch.zoneId = body.zone_id === null ? null : Number(body.zone_id);
   }
+  if (body.gate_id !== undefined) patch.gateId = await resolveGate(body.gate_id, patch.zoneId !== undefined ? patch.zoneId : target.zoneId);
   if (body.password) patch.passwordHash = hashPassword(String(body.password));
   patch.updatedAt = new Date();
   const rows = await db.update(users).set(patch).where(eq(users.id, id)).returning();
@@ -378,8 +416,11 @@ app.post("/api/passes", async (c) => {
       status: "active",
       issuedBy: u.id,
       note: String(body.note || ""),
+      ...passAccessFields(body, u.role === "master"),
     })
     .returning();
+  if (rows[0] && rows[0].zoneId)
+    await db.insert(accessRules).values({ scopeType: "pass", scopeId: rows[0].id, targetType: "zone", targetId: rows[0].zoneId, effect: "allow", note: "home zone" });
   return c.json({ pass: rows[0] });
 });
 
@@ -393,10 +434,11 @@ app.post("/api/passes/bulk", async (c) => {
   if (!eventId) return bad(c, "event_id required");
   let zoneId = body.zone_id ? Number(body.zone_id) : null;
   if (u.role === "sub_admin") zoneId = u.zoneId;
+  const profileId = u.role === "master" && body.profile_id ? Number(body.profile_id) : null;
   const values = [];
   for (const line of lines) {
     const parts = line.split(",").map((p) => p.trim());
-    const [name, phone, group, note] = parts;
+    const [name, phone, group, note, mem] = parts;
     if (!name) continue;
     values.push({
       passNo: `P${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
@@ -408,10 +450,14 @@ app.post("/api/passes/bulk", async (c) => {
       status: "active",
       issuedBy: u.id,
       note: note || "",
+      profileId,
+      members: Math.max(1, parseInt(mem, 10) || 1),
     });
   }
   if (!values.length) return bad(c, "Format: name, phone, group, note");
   const rows = await db.insert(passes).values(values).returning();
+  if (zoneId)
+    await db.insert(accessRules).values(rows.map((r) => ({ scopeType: "pass", scopeId: r.id, targetType: "zone", targetId: zoneId, effect: "allow", note: "home zone" })));
   return c.json({ created: rows.length, passes: rows });
 });
 
@@ -437,6 +483,7 @@ app.put("/api/passes/:id", async (c) => {
     if (u.role === "sub_admin") return bad(c, "Not allowed", 403);
     patch.zoneId = body.zone_id === null ? null : Number(body.zone_id);
   }
+  Object.assign(patch, passAccessFields(body, u.role === "master"));
   patch.updatedAt = new Date();
   const rows = await db.update(passes).set(patch).where(eq(passes.id, id)).returning();
   return c.json({ pass: rows[0] });
@@ -451,6 +498,8 @@ app.delete("/api/passes/:id", async (c) => {
   if (!p) return bad(c, "Pass not found", 404);
   if (u.role === "sub_admin" && p.zoneId !== u.zoneId) return bad(c, "Not allowed", 403);
   await db.delete(scans).where(eq(scans.passId, id));
+  await db.delete(passPresence).where(eq(passPresence.passId, id));
+  await db.delete(accessRules).where(and(eq(accessRules.scopeType, "pass"), eq(accessRules.scopeId, id)));
   await db.delete(passes).where(eq(passes.id, id));
   return c.json({ ok: true });
 });
@@ -479,98 +528,8 @@ app.get("/api/scan/:passNo", async (c) => {
   });
 });
 
-app.post("/api/scan", async (c) => {
-  const u = await auth(c);
-  if (!u) return bad(c, "Unauthorized", 401);
-  const body = await c.req.json().catch(() => ({}));
-  const passNo = String(body.pass_no || "").trim();
-  const type = body.type === "exit" ? "exit" : "entry";
-  if (!passNo) return bad(c, "pass_no required");
-  const rows = await db.select().from(passes).where(eq(passes.passNo, passNo)).limit(1);
-  const p = rows[0];
-  if (!p) {
-    await db.insert(scans).values({
-      passId: 0,
-      eventId: 0,
-      guardId: u.id,
-      guardZoneId: u.zoneId,
-      type,
-      result: "not_found",
-    });
-    return bad(c, "Pass not found", 404);
-  }
-  const evRows = await db.select().from(events).where(eq(events.id, p.eventId)).limit(1);
-  const ev = evRows[0];
-  const zoneRows = p.zoneId ? await db.select().from(zones).where(eq(zones.id, p.zoneId)).limit(1) : [];
-  const enrich = (pass) => ({
-    ...pass,
-    zoneName: pass.zoneId ? (zoneRows[0] ? zoneRows[0].name : "") : "",
-    eventName: ev ? ev.name : "",
-  });
-  if (!ev || ev.status !== "active") {
-    await db.insert(scans).values({
-      passId: p.id,
-      eventId: p.eventId,
-      guardId: u.id,
-      guardZoneId: u.zoneId,
-      type,
-      result: "event_closed",
-    });
-    return c.json({ ok: false, result: "event_closed", pass: enrich(p), message: "Event is closed" });
-  }
-  if (p.status === "blocked") {
-    await db.insert(scans).values({
-      passId: p.id,
-      eventId: p.eventId,
-      guardId: u.id,
-      guardZoneId: u.zoneId,
-      type,
-      result: "blocked",
-    });
-    return c.json({ ok: false, result: "blocked", pass: enrich(p), message: "Pass is blocked" });
-  }
-  if (type === "entry" && p.status === "checked_in") {
-    await db.insert(scans).values({
-      passId: p.id,
-      eventId: p.eventId,
-      guardId: u.id,
-      guardZoneId: u.zoneId,
-      type,
-      result: "already_in",
-    });
-    return c.json({ ok: false, result: "already_in", pass: enrich(p), message: "This mumin is already inside (entry already recorded)" });
-  }
-  if (type === "exit" && p.status !== "checked_in") {
-    await db.insert(scans).values({
-      passId: p.id,
-      eventId: p.eventId,
-      guardId: u.id,
-      guardZoneId: u.zoneId,
-      type,
-      result: "no_entry",
-    });
-    return c.json({ ok: false, result: "no_entry", pass: enrich(p), message: "No entry recorded for this pass — exit is not possible" });
-  }
-  const newStatus = type === "entry" ? "checked_in" : "checked_out";
-  await db
-    .update(passes)
-    .set({ status: newStatus, updatedAt: new Date() })
-    .where(eq(passes.id, p.id));
-  await db.insert(scans).values({
-    passId: p.id,
-    eventId: p.eventId,
-    guardId: u.id,
-    guardZoneId: u.zoneId,
-    type,
-    result: "ok",
-  });
-  return c.json({
-    ok: true,
-    result: "ok",
-    pass: enrich({ ...p, status: newStatus }),
-    message: type === "entry" ? "ENTRY ALLOWED" : "EXIT ALLOWED",
-  });
-});
+registerAccessRoutes(app, { db, auth, bad }); // smart scan, gates, profiles, permissions, live
+registerDemoRoutes(app, { db, auth, bad });
 
 /* ---------- stats ---------- */
 

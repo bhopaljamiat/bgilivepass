@@ -1,4 +1,4 @@
-const CACHE = 'burhani-guards-v3';
+const CACHE = 'burhani-guards-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -12,7 +12,8 @@ const ASSETS = [
   './icon-512.png',
   './icon-maskable-512.png',
   './apple-touch-icon.png',
-  './assets/app-install.js'
+  './assets/app-install.js',
+  './assets/admin-ext.js'
 ];
 
 self.addEventListener('install', (e) => {
@@ -59,12 +60,17 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  // network-first for scripts/assets too, so a new deploy is never hidden behind a stale cache
   e.respondWith((async () => {
-    const hit = await caches.match(req, { ignoreSearch: true });
-    if (hit) return hit;
-    const res = await fetch(req);
-    const copy = res.clone();
-    caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-    return res;
+    try {
+      const res = await fetch(req);
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      return res;
+    } catch (err) {
+      const hit = await caches.match(req, { ignoreSearch: true });
+      if (hit) return hit;
+      throw err;
+    }
   })());
 });

@@ -20,12 +20,11 @@
   body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--txt); min-height: 100vh; }
   button { font-family: inherit; cursor: pointer; }
   input, select { font-family: inherit; background: var(--bg); color: var(--txt); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14px; width: 100%; }
-  input:focus { outline: none; border-color: var(--acc); }
+  input:focus, select:focus { outline: none; border-color: var(--acc); }
   label { font-size: 12px; color: var(--mut); display: block; margin-bottom: 5px; }
   .btn { background: var(--acc); color: #06281f; border: none; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; }
   .btn:hover { filter: brightness(1.1); }
   .btn.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line); }
-  .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
   .btn.sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
   header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; z-index: 20; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
@@ -33,25 +32,23 @@
   .who { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mut); }
   .who b { color: var(--txt); }
   main { padding: 16px; max-width: 640px; margin: 0 auto; padding-bottom: 90px; }
-  .mode-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
-  .mode-toggle button { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--mut); font-size: 15px; font-weight: 700; }
+  .gatebar { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; }
+  .gatebar .sel { flex: 1; }
+  .dir { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .dir.in { background: rgba(62,207,174,0.16); color: var(--acc); }
+  .dir.out { background: rgba(240,180,41,0.16); color: var(--acc2); }
+  .dir.both { background: rgba(96,165,250,0.16); color: var(--blue); }
+  .mode-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+  .mode-toggle button { flex: 1; padding: 13px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--mut); font-size: 14px; font-weight: 700; }
+  .mode-toggle button.auto.active { background: rgba(96,165,250,0.18); color: var(--blue); border-color: var(--blue); }
   .mode-toggle button.entry.active { background: rgba(62,207,174,0.18); color: var(--acc); border-color: var(--acc); }
   .mode-toggle button.exit.active { background: rgba(240,180,41,0.18); color: var(--acc2); border-color: var(--acc2); }
+  .mode-toggle button:disabled { opacity: 0.35; cursor: not-allowed; }
   .camera-wrap { position: relative; background: #000; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); margin-bottom: 14px; }
   .camera-wrap video { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
-  .camera-wrap canvas { display: none; }
   .cam-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; background: rgba(4,8,16,0.85); color: var(--mut); font-size: 14px; text-align: center; padding: 16px; }
   .scanline { position: absolute; left: 8%; right: 8%; top: 48%; height: 3px; background: var(--acc); border-radius: 3px; box-shadow: 0 0 14px var(--acc); animation: scan 2.2s ease-in-out infinite; opacity: 0.85; }
   @keyframes scan { 0% { top: 30%; } 50% { top: 66%; } 100% { top: 30%; } }
-  .result { border-radius: 14px; padding: 18px; margin-bottom: 14px; display: none; border: 1px solid; }
-  .result.ok { background: rgba(62,207,174,0.1); border-color: var(--acc); }
-  .result.fail { background: rgba(240,86,106,0.1); border-color: var(--danger); }
-  .result .big { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
-  .result.ok .big { color: var(--acc); }
-  .result.fail .big { color: var(--danger); }
-  .result .info { margin-top: 8px; font-size: 14px; color: var(--txt); line-height: 1.6; }
-  .result .info b { color: var(--txt); }
-  .result .info .mut { color: var(--mut); }
   .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
   .panel h3 { font-size: 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -59,14 +56,12 @@
   td { padding: 8px; border-bottom: 1px solid var(--line); }
   tr:last-child td { border-bottom: none; }
   .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-  .pill.ok { background: rgba(62,207,174,0.14); color: var(--acc); }
-  .pill.failed { background: rgba(240,86,106,0.14); color: var(--danger); }
-  .pill.active { background: rgba(62,207,174,0.14); color: var(--acc); }
+  .pill.ok, .pill.active { background: rgba(62,207,174,0.14); color: var(--acc); }
+  .pill.failed, .pill.blocked { background: rgba(240,86,106,0.14); color: var(--danger); }
   .pill.checked_in { background: rgba(96,165,250,0.14); color: var(--blue); }
   .pill.checked_out { background: rgba(240,180,41,0.14); color: var(--acc2); }
-  .pill.blocked { background: rgba(240,86,106,0.14); color: var(--danger); }
   .mut { color: var(--mut); font-size: 12px; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--line); color: var(--txt); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 100; display: none; max-width: 90vw; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--line); color: var(--txt); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 120; display: none; max-width: 90vw; }
   .toast.err { border-color: var(--danger); color: var(--danger); }
   .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .login-box { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px; width: 100%; max-width: 380px; text-align: center; }
@@ -75,12 +70,24 @@
   .login-box .sub { color: var(--mut); font-size: 13px; margin-bottom: 22px; }
   .login-box .f { margin-bottom: 14px; text-align: left; }
   .empty { text-align: center; color: var(--mut); padding: 24px 8px; font-size: 14px; }
-  .flex { display: flex; gap: 8px; align-items: center; }
-  .beep { display: none; }
   .manual-row { display: flex; gap: 8px; }
   .manual-row input { flex: 1; }
-  .beep-once { animation: pulse 0.4s; }
-  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+  .grp { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+  .grp select { width: auto; min-width: 110px; }
+  .foot { text-align: center; color: var(--mut); font-size: 12px; margin-top: 26px; }
+  /* full-screen result */
+  .overlay { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; color: #fff; }
+  .overlay.ok { background: linear-gradient(160deg, #0a8f6a, #067252); }
+  .overlay.fail { background: linear-gradient(160deg, #c0283f, #8f1428); }
+  .ov-icon { font-size: 84px; line-height: 1; margin-bottom: 10px; }
+  .ov-title { font-size: 30px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 14px; }
+  .ov-name { font-size: 26px; font-weight: 700; }
+  .ov-meta { font-size: 16px; opacity: 0.92; margin-top: 6px; line-height: 1.6; }
+  .ov-zone { margin-top: 18px; background: rgba(0,0,0,0.22); border-radius: 12px; padding: 10px 18px; font-size: 16px; font-weight: 600; min-width: 240px; }
+  .ov-bar { height: 8px; background: rgba(255,255,255,0.25); border-radius: 6px; margin-top: 8px; overflow: hidden; }
+  .ov-bar i { display: block; height: 100%; background: #fff; border-radius: 6px; }
+  .ov-allowed { margin-top: 14px; font-size: 15px; background: rgba(0,0,0,0.25); padding: 8px 14px; border-radius: 10px; }
+  .ov-tap { position: absolute; bottom: 22px; font-size: 12px; opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -96,6 +103,7 @@
       <button class="btn" style="width:100%" type="submit">Login</button>
     </form>
     <div class="mut" style="margin-top:16px">Admin? <a href="/admin.html" style="color:var(--acc)">Master app</a> · <a href="/sub-admin.html" style="color:var(--acc)">Sub Admin app</a></div>
+    <div class="foot">Developed by Chartered Softwares</div>
   </div>
 </div>
 
@@ -105,17 +113,25 @@
     <div class="who"><b id="whoName"></b><span class="mut" id="whoZone"></span><button class="btn ghost sm" id="logoutBtn">Logout</button></div>
   </header>
   <main>
+    <div class="gatebar">
+      <div class="sel">
+        <label id="gateLabel">Your gate</label>
+        <select id="gateSel"></select>
+      </div>
+      <span class="dir both" id="gateDir">—</span>
+    </div>
+
     <div class="mode-toggle">
-      <button class="entry active" id="modeEntry">⬇ ENTRY</button>
+      <button class="auto active" id="modeAuto">⇅ AUTO</button>
+      <button class="entry" id="modeEntry">⬇ ENTRY</button>
       <button class="exit" id="modeExit">⬆ EXIT</button>
     </div>
 
     <div class="camera-wrap">
       <video id="video" playsinline muted></video>
-      <canvas id="canvas"></canvas>
       <div class="cam-off" id="camOff">
-        <div>📷 Camera band hai</div>
-        <button class="btn" id="startCamBtn">Camera Start</button>
+        <div>📷 Camera is off</div>
+        <button class="btn" id="startCamBtn">Start Camera</button>
       </div>
       <div class="scanline" id="scanline" style="display:none"></div>
     </div>
@@ -126,9 +142,12 @@
         <input id="manualPass" placeholder="Pass No (e.g. PX1A2B3C)" style="text-transform:uppercase">
         <button class="btn" id="manualBtn" style="flex:0">Check</button>
       </div>
+      <div class="grp">
+        <label style="margin:0">People with this pass</label>
+        <select id="members"><option value="">All</option></select>
+        <span class="mut">for family / group passes</span>
+      </div>
     </div>
-
-    <div class="result" id="result"></div>
 
     <div class="panel">
       <h3>Lookup Pass</h3>
@@ -143,21 +162,32 @@
       <h3>My Recent Scans <button class="btn ghost sm" id="refreshBtn">Refresh</button></h3>
       <div class="scroll"><table id="scanList"></table></div>
     </div>
+    <div class="foot">Developed by Chartered Softwares</div>
   </main>
 </div>
 
+<div class="overlay" id="overlay">
+  <div class="ov-icon" id="ovIcon"></div>
+  <div class="ov-title" id="ovTitle"></div>
+  <div class="ov-name" id="ovName"></div>
+  <div class="ov-meta" id="ovMeta"></div>
+  <div class="ov-zone" id="ovZone"></div>
+  <div class="ov-allowed" id="ovAllowed"></div>
+  <div class="ov-tap">Tap anywhere to continue</div>
+</div>
 <div class="toast" id="toast"></div>
-<audio id="beepOk" class="beep" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
-<audio id="beepErr" class="beep" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
 
 <script>
 const $ = (s) => document.querySelector(s);
 let token = localStorage.getItem("bgi_token") || "";
 let me = null;
-let mode = "entry";
+let mode = "auto";
 let scanning = false;
+let gates = [];
+let gate = null;
+let wasLocked = false;
 let lastScan = "";
-let recentScans = [];
+let lastScanTime = 0;
 
 async function api(path, opts = {}) {
   const res = await fetch("/api" + path, {
@@ -167,7 +197,7 @@ async function api(path, opts = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && !path.startsWith("/login")) { logout(); throw new Error(data.error || "Unauthorized"); }
-  if (!res.ok && !res.json) throw new Error(data.error || "Error " + res.status);
+  if (!res.ok) throw new Error(data.error || "Error " + res.status);
   return data;
 }
 
@@ -179,6 +209,7 @@ function toast(msg, err = false) {
   clearTimeout(t._t);
   t._t = setTimeout(() => (t.style.display = "none"), 2600);
 }
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function logout() {
   token = "";
@@ -191,23 +222,29 @@ function logout() {
 
 function fmtTime(s) {
   if (!s) return "-";
-  const d = new Date(s);
-  return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  return new Date(s).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
 function beep(ok) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = ok ? 880 : 220;
-    g.gain.value = 0.15;
-    o.start();
-    o.stop(ctx.currentTime + (ok ? 0.12 : 0.35));
-    setTimeout(() => ctx.close(), 500);
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const tone = (f, at, dur) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.frequency.value = f; g.gain.value = 0.18;
+      o.start(ac.currentTime + at); o.stop(ac.currentTime + at + dur);
+    };
+    if (ok) { tone(880, 0, 0.1); tone(1175, 0.13, 0.12); } else { tone(200, 0, 0.45); }
+    setTimeout(() => ac.close(), 900);
   } catch {}
+  try { navigator.vibrate && navigator.vibrate(ok ? 80 : [220, 80, 220]); } catch {}
 }
+
+const REASON = {
+  ok: "OK", no_permission: "No access", already_in: "Already in", no_entry: "Not inside", zone_full: "Zone full",
+  blocked: "Blocked", expired: "Expired", not_yet_valid: "Not valid yet", outside_time: "Wrong time",
+  max_entries: "Entry limit", gate_closed: "Gate closed", event_closed: "Event closed", not_found: "Not found",
+};
 
 /* ---- login ---- */
 $("#loginForm").addEventListener("submit", async (e) => {
@@ -223,7 +260,6 @@ $("#loginForm").addEventListener("submit", async (e) => {
     startApp();
   } catch (err) { toast(err.message, true); }
 });
-
 $("#logoutBtn").addEventListener("click", async () => { try { await api("/logout", { method: "POST" }); } catch {} logout(); });
 
 async function startApp() {
@@ -234,23 +270,53 @@ async function startApp() {
     const d = await api("/me");
     $("#whoZone").textContent = d.zone ? " · " + d.zone.name : "";
   } catch {}
+  const sel = $("#members");
+  for (let i = 1; i <= 12; i++) sel.insertAdjacentHTML("beforeend", `<option value="${i}">${i}</option>`);
+  await loadGates();
   loadRecent();
   $("#startCamBtn").addEventListener("click", startCamera);
   startCamera();
 }
 
+/* ---- gate ---- */
+async function loadGates() {
+  try { gates = (await api("/gates")).gates || []; } catch { gates = []; }
+  const sel = $("#gateSel");
+  const fixed = me.gate_id;
+  sel.innerHTML = gates.map((g) => `<option value="${g.id}">${esc(g.name)} · ${esc(g.zoneName || "")}</option>`).join("") || `<option value="">No gates configured</option>`;
+  const saved = Number(localStorage.getItem("bgi_gate"));
+  const id = fixed || (gates.find((g) => g.id === saved) ? saved : gates[0] && gates[0].id);
+  if (id) sel.value = String(id);
+  sel.disabled = !!fixed;
+  $("#gateLabel").textContent = fixed ? "Your gate (assigned by admin)" : "Select your gate";
+  applyGate();
+}
+$("#gateSel").addEventListener("change", () => { localStorage.setItem("bgi_gate", $("#gateSel").value); applyGate(); });
+
+function applyGate() {
+  gate = gates.find((g) => g.id === Number($("#gateSel").value)) || null;
+  const d = gate ? gate.direction : "both";
+  const el = $("#gateDir");
+  el.className = "dir " + d;
+  el.textContent = !gate ? "—" : d === "in" ? "ENTRY ONLY" : d === "out" ? "EXIT ONLY" : "ENTRY + EXIT";
+  const locked = d === "in" || d === "out";
+  $("#modeAuto").disabled = $("#modeEntry").disabled = $("#modeExit").disabled = locked;
+  if (locked) setMode(d === "in" ? "entry" : "exit", true);
+  else if (wasLocked || !gate) setMode("auto"); // leaving an entry-only/exit-only gate: back to smart AUTO
+  wasLocked = locked;
+}
+
 /* ---- mode ---- */
+$("#modeAuto").addEventListener("click", () => setMode("auto"));
 $("#modeEntry").addEventListener("click", () => setMode("entry"));
 $("#modeExit").addEventListener("click", () => setMode("exit"));
-function setMode(m) {
+function setMode(m, force) {
   mode = m;
-  $("#modeEntry").classList.toggle("active", m === "entry");
-  $("#modeExit").classList.toggle("active", m === "exit");
+  ["Auto", "Entry", "Exit"].forEach((n) => $("#mode" + n).classList.toggle("active", m === n.toLowerCase()));
 }
 
 /* ---- camera ---- */
-let video = null;
-let stream = null;
+let video = null, stream = null;
 async function startCamera() {
   video = $("#video");
   try {
@@ -270,26 +336,20 @@ function stopCamera() {
   scanning = false;
   if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
 }
-
 const canvas = document.createElement("canvas");
-const ctx = canvas.getContext("2d", { willReadFrequently: true });
-async function tick() {
-  if (!scanning || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
-    if (scanning) requestAnimationFrame(tick);
-    return;
-  }
+const ctx2d = canvas.getContext("2d", { willReadFrequently: true });
+function tick() {
+  if (!scanning) return;
+  if (!video || video.readyState !== video.HAVE_ENOUGH_DATA || !video.videoWidth) { requestAnimationFrame(tick); return; }
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  if (!canvas.width) { requestAnimationFrame(tick); return; }
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  ctx2d.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const img = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
   let code = null;
-  try {
-    if (window.jsQR) code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
-  } catch {}
+  try { if (window.jsQR) code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" }); } catch {}
   if (code && code.data) {
     const now = Date.now();
-    if (code.data !== lastScan || now - lastScanTime > 3000) {
+    if (code.data !== lastScan || now - lastScanTime > 3500) {
       lastScan = code.data;
       lastScanTime = now;
       doScan(code.data);
@@ -297,54 +357,71 @@ async function tick() {
   }
   requestAnimationFrame(tick);
 }
-let lastScanTime = 0;
 
 /* ---- scan ---- */
 async function doScan(passNo) {
   passNo = String(passNo).trim();
   if (!passNo) return;
-  const type = mode;
+  if (!gate) { toast("Select a gate first", true); return; }
+  const members = $("#members").value;
   try {
     const res = await fetch("/api/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({ pass_no: passNo, type }),
+      body: JSON.stringify({ pass_no: passNo, type: mode, gate_id: gate.id, members: members ? Number(members) : undefined }),
     });
-    const data = await res.json();
-    if (res.status === 404) {
-      showResult(false, "❌ PASS NOT FOUND", `Pass no <b>${passNo}</b> was not found in the system. Check the manual entry list or contact the admin.`);
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json().catch(() => ({}));
+    $("#members").value = "";
+    if (res.status === 404 || data.result === "not_found") {
+      showOverlay(false, { title: "PASS NOT FOUND", name: passNo, meta: "This pass number is not in the system." });
       beep(false);
-      return;
-    }
-    if (data.ok) {
-      const p = data.pass;
-      showResult(true, `✅ ${data.message}`, `
-        <b>${p.name}</b> <span class="mut">(${p.passNo})</span><br>
-        Group: ${p.group || "-"} · Zone: ${p.zoneName || "-"} · Event: ${p.eventName || "-"}<br>
-        Status: <span class="pill ${p.status}">${p.status}</span>`);
-      beep(true);
+    } else if (!data.pass) {
+      toast(data.error || "Scan failed", true);
+      beep(false);
     } else {
-      showResult(false, `⛔ ${data.message || "Entry denied"}`, `
-        <b>${p.name}</b> <span class="mut">(${p.passNo})</span><br>
-        Status: <span class="pill ${p.status}">${p.status}</span>`);
-      beep(false);
+      showOverlay(!!data.ok, data);
+      beep(!!data.ok);
     }
     loadRecent();
-  } catch (err) {
-    if (err.message !== "Unauthorized") toast(err.message, true);
-  }
+  } catch (err) { toast(err.message || "Network error", true); }
 }
 
-function showResult(ok, title, info) {
-  const r = $("#result");
-  r.className = "result " + (ok ? "ok" : "fail");
-  r.innerHTML = `<div class="big">${title}</div><div class="info">${info}</div>`;
-  r.style.display = "block";
-  r.classList.add("beep-once");
-  setTimeout(() => r.classList.remove("beep-once"), 400);
-  clearTimeout(r._t);
-  r._t = setTimeout(() => { r.style.display = "none"; }, 6000);
+let ovTimer = null;
+function showOverlay(ok, d) {
+  const p = d.pass || {};
+  const o = $("#overlay");
+  o.className = "overlay " + (ok ? "ok" : "fail");
+  o.style.display = "flex";
+  $("#ovIcon").textContent = ok ? (d.type === "exit" ? "⬆" : "⬇") : "⛔";
+  $("#ovTitle").textContent = d.title || d.message || (ok ? "ALLOWED" : "DENIED");
+  $("#ovName").textContent = p.name || d.name || "";
+  const bits = [];
+  if (p.passNo) bits.push(esc(p.passNo));
+  if (p.group) bits.push(esc(p.group));
+  let meta = bits.join(" · ");
+  if (p.members > 1) meta += `<br>${ok ? d.members + " of " + p.members + " people · " : ""}${d.insideHere != null ? d.insideHere + " of " + p.members + " now inside" : p.members + " people"}`;
+  if (d.meta) meta = esc(d.meta);
+  $("#ovMeta").innerHTML = meta;
+  const z = d.zone, zEl = $("#ovZone");
+  if (z && z.name && ok) {
+    const cap = z.capacity > 0 ? z.capacity : 0;
+    const pct = cap ? Math.min(100, Math.round(((d.zoneInside || 0) / cap) * 100)) : 0;
+    zEl.style.display = "block";
+    zEl.innerHTML = `${esc(z.name)}: ${d.zoneInside != null ? d.zoneInside : "-"}${cap ? " / " + cap : " inside"}${cap ? `<div class="ov-bar"><i style="width:${pct}%"></i></div>` : ""}`;
+  } else if (z && z.name && !ok && d.result === "zone_full") {
+    zEl.style.display = "block";
+    zEl.innerHTML = `${esc(z.name)} is FULL — send to another gate / zone`;
+  } else zEl.style.display = "none";
+  const al = $("#ovAllowed");
+  if (!ok && d.allowedZones && d.allowedZones.length) { al.style.display = "block"; al.textContent = "Allowed: " + d.allowedZones.join(", "); }
+  else if (!ok && d.result === "no_permission") { al.style.display = "block"; al.textContent = "Not permitted anywhere — contact admin"; }
+  else al.style.display = "none";
+  clearTimeout(ovTimer);
+  ovTimer = setTimeout(hideOverlay, ok ? 3200 : 6000);
 }
+function hideOverlay() { $("#overlay").style.display = "none"; clearTimeout(ovTimer); }
+$("#overlay").addEventListener("click", hideOverlay);
 
 $("#manualBtn").addEventListener("click", () => { doScan($("#manualPass").value); $("#manualPass").value = ""; });
 $("#manualPass").addEventListener("keydown", (e) => { if (e.key === "Enter") { doScan($("#manualPass").value); $("#manualPass").value = ""; } });
@@ -357,14 +434,14 @@ $("#lookupBtn").addEventListener("click", async () => {
   try {
     const d = await api("/scan/" + encodeURIComponent(pn));
     const p = d.pass;
-    const recent = d.recent.map((s) => `<tr><td>${fmtTime(s.createdAt)}</td><td>${s.type === "entry" ? "⬇" : "⬆"}</td><td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${s.result}</span></td></tr>`).join("");
+    const recent = (d.recent || []).map((s) => `<tr><td>${fmtTime(s.createdAt)}</td><td>${s.type === "entry" ? "⬇" : "⬆"}</td><td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${REASON[s.result] || s.result}</span></td></tr>`).join("");
     $("#lookupResult").innerHTML = `
-      <b>${p.name}</b> <span class="mut">(${p.passNo})</span><br>
-      Group: ${p.group || "-"} · Phone: ${p.phone || "-"}<br>
+      <b>${esc(p.name)}</b> <span class="mut">(${esc(p.passNo)})</span><br>
+      Group: ${esc(p.group || "-")} · Phone: ${esc(p.phone || "-")}${p.members > 1 ? " · People: " + p.members : ""}<br>
       Status: <span class="pill ${p.status}">${p.status}</span>
       ${recent ? `<table style="margin-top:8px"><tr><th>Time</th><th>Type</th><th>Result</th></tr>${recent}</table>` : ""}`;
   } catch (err) {
-    $("#lookupResult").innerHTML = `<span class="mut" style="color:var(--danger)">${err.message}</span>`;
+    $("#lookupResult").innerHTML = `<span class="mut" style="color:var(--danger)">${esc(err.message)}</span>`;
   }
 });
 
@@ -373,10 +450,10 @@ async function loadRecent() {
   try {
     const d = await api("/stats");
     $("#scanList").innerHTML = `<tr><th>Time</th><th>Mumin</th><th>Pass No</th><th>Type</th><th>Result</th></tr>` +
-      (d.recent_scans.map((s) => `<tr><td class="mut">${fmtTime(s.createdAt)}</td><td>${s.pass_name}</td>
-      <td style="font-family:monospace">${s.pass_no || "—"}</td>
+      ((d.recent_scans || []).map((s) => `<tr><td class="mut">${fmtTime(s.createdAt)}</td><td>${esc(s.pass_name)}</td>
+      <td style="font-family:monospace">${esc(s.pass_no || "—")}</td>
       <td>${s.type === "entry" ? "⬇ Entry" : "⬆ Exit"}</td>
-      <td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${s.result}</span></td></tr>`).join("") || `<tr><td colspan="5" class="empty">No scans yet</td></tr>`);
+      <td><span class="pill ${s.result === "ok" ? "ok" : "failed"}">${REASON[s.result] || esc(s.result)}</span></td></tr>`).join("") || `<tr><td colspan="5" class="empty">No scans yet</td></tr>`);
   } catch (err) { console.error(err); }
 }
 $("#refreshBtn").addEventListener("click", loadRecent);

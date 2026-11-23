@@ -110,6 +110,7 @@
       <button class="btn" style="width:100%" type="submit">Create Master Admin</button>
     </form>
     <div class="mut" style="margin-top:16px">Guard? <a href="/guard.html" style="color:var(--acc)">Guard app</a> · Sub Admin? <a href="/sub-admin.html" style="color:var(--acc)">Sub Admin app</a></div>
+    <div class="mut" style="margin-top:14px;font-size:11px">Developed by Chartered Softwares</div>
   </div>
 </div>
 
@@ -195,6 +196,7 @@
       <div class="panel">
         <h3><span>Passes</span>
           <span class="flex">
+            <button class="btn ghost sm" onclick="bulkAccess()">Bulk Access</button>
             <button class="btn ghost sm" id="bulkBtn">Bulk Import</button>
             <button class="btn sm" id="newPassBtn">+ New Pass</button>
           </span>
@@ -391,11 +393,12 @@ async function loadUsers() {
     const z = zones.find((x) => x.id === u.zone_id);
     return `<tr><td><b>${u.name}</b><br><span class="mut">${u.phone || "-"}</span></td><td>${u.username}</td>
     <td><span class="pill ${u.role}">${u.role}</span></td><td>${z ? z.name : '<span class="mut">-</span>'}</td>
+    <td>${(window.gatesAll || []).find((g) => g.id === u.gate_id)?.name || '<span class="mut">-</span>'}</td>
     <td><span class="pill ${u.status}">${u.status}</span></td>
     <td class="flex"><button class="btn ghost sm" onclick="editUser(${u.id})">Edit</button>
     <button class="btn danger sm" onclick="delUser(${u.id})">Delete</button></td></tr>`;
   }).join("");
-  $("#userList").innerHTML = `<tr><th>Name</th><th>Username</th><th>Role</th><th>Zone</th><th>Status</th><th>Actions</th></tr>` + (rows || `<tr><td colspan="6" class="empty">No users</td></tr>`);
+  $("#userList").innerHTML = `<tr><th>Name</th><th>Username</th><th>Role</th><th>Zone</th><th>Gate</th><th>Status</th><th>Actions</th></tr>` + (rows || `<tr><td colspan="7" class="empty">No users</td></tr>`);
 }
 $("#userFilter").addEventListener("change", loadUsers);
 $("#userForm").addEventListener("submit", async (e) => {
@@ -485,6 +488,12 @@ window.delEvent = async (id) => {
 };
 
 /* ---- passes ---- */
+function passAccessLabel(r) {
+  if (r.accessMode === "all") return '<span class="pill active">Open (all zones)</span>';
+  const pr = (window.profilesAll || []).find((x) => x.id === r.profileId);
+  if (pr) return '<span class="pill" style="background:' + (pr.color || "#3b82f6") + '28;color:' + (pr.color || "#3b82f6") + '">' + pr.name + "</span>";
+  return '<span class="mut">Custom rules only</span>';
+}
 async function loadPasses() {
   await loadZones(true);
   await loadEvents();
@@ -493,14 +502,15 @@ async function loadPasses() {
   if ($("#passEvent").value) p.push("event_id=" + $("#passEvent").value);
   if ($("#passZone").value) p.push("zone=" + $("#passZone").value);
   if ($("#passStatus").value) p.push("status=" + $("#passStatus").value);
+  try { window.profilesAll = (await api("/profiles")).profiles || []; } catch {}
   const data = await api("/passes" + (p.length ? "?" + p.join("&") : ""));
-  const rows = data.passes.map((r) => `<tr><td style="font-family:monospace">${r.passNo}</td><td><b>${r.name}</b><br><span class="mut">${r.phone || "-"}</span></td>
-    <td>${r.group || "-"}</td><td>${r.zone_name || "-"}</td><td>${r.event_name || "-"}</td>
+  const rows = data.passes.map((r) => `<tr><td style="font-family:monospace">${r.passNo}</td><td><b>${r.name}</b>${r.members > 1 ? ' <span class="mut">×' + r.members + " people</span>" : ""}<br><span class="mut">${r.phone || "-"}</span></td>
+    <td>${r.group || "-"}</td><td>${passAccessLabel(r)}</td><td>${r.event_name || "-"}</td>
     <td><span class="pill ${r.status}">${r.status}</span></td>
-    <td class="flex"><button class="btn ghost sm" onclick="showQR(${r.id})">QR</button>
+    <td class="flex"><button class="btn sm" onclick="passAccess(${r.id})">Access</button><button class="btn ghost sm" onclick="showQR(${r.id})">QR</button>
     <button class="btn ghost sm" onclick="editPass(${r.id})">Edit</button>
     <button class="btn danger sm" onclick="delPass(${r.id})">Delete</button></td></tr>`).join("");
-  $("#passList").innerHTML = `<tr><th>Pass No</th><th>Name</th><th>Group</th><th>Zone</th><th>Event</th><th>Status</th><th>Actions</th></tr>` + (rows || `<tr><td colspan="7" class="empty">No passes found</td></tr>`);
+  $("#passList").innerHTML = `<tr><th>Pass No</th><th>Name</th><th>Group</th><th>Access</th><th>Event</th><th>Status</th><th>Actions</th></tr>` + (rows || `<tr><td colspan="7" class="empty">No passes found</td></tr>`);
 }
 ["passSearch", "passEvent", "passZone", "passStatus"].forEach((id) => {
   $("#passSearch").addEventListener("input", debounce(loadPasses, 300));
@@ -532,7 +542,7 @@ window.editPass = (id) => {
       <div class="f"><label>Name</label><input id="mpName" value="${p.name}"></div>
       <div class="f"><label>Phone</label><input id="mpPhone" value="${p.phone || ""}"></div>
       <div class="f"><label>Group</label><input id="mpGroup" value="${p.group || ""}"></div>
-      <div class="f"><label>Zone</label><select id="mpZone">${zopts}</select></div>
+      <div class="f"><label>Home zone (info only — use the Access button to change who can go where)</label><select id="mpZone">${zopts}</select></div>
       <div class="f"><label>Status</label><select id="mpStatus"><option value="active" ${p.status === "active" ? "selected" : ""}>active</option><option value="checked_in" ${p.status === "checked_in" ? "selected" : ""}>checked_in</option><option value="checked_out" ${p.status === "checked_out" ? "selected" : ""}>checked_out</option><option value="blocked" ${p.status === "blocked" ? "selected" : ""}>blocked</option></select></div>
       <div class="f"><label>Note</label><input id="mpNote" value="${p.note || ""}"></div>
       <div class="flex"><button class="btn" onclick="savePass(${id})">Save</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
@@ -558,7 +568,9 @@ $("#newPassBtn").addEventListener("click", () => {
     <div class="f"><label>Name</label><input id="npName" required></div>
     <div class="f"><label>Phone</label><input id="npPhone"></div>
     <div class="f"><label>Group</label><input id="npGroup" placeholder="e.g. Family / Jamat"></div>
-    <div class="f"><label>Zone</label><select id="npZone">${zopts}</select></div>
+    <div class="f"><label>Access profile (decides where this mumin may go)</label><select id="npProfile"><option value="">— choose a profile —</option>${(window.profilesAll || []).map((x) => `<option value="${x.id}">${x.name}</option>`).join("")}</select></div>
+    <div class="f"><label>People on this pass</label><input id="npMembers" type="number" min="1" value="1"></div>
+    <div class="f"><label>Home zone (optional — also allows this zone)</label><select id="npZone">${zopts}</select></div>
     <div class="f"><label>Pass No (leave blank to auto-generate)</label><input id="npPassNo"></div>
     <div class="flex"><button class="btn" onclick="createPass()">Create</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
 });
@@ -567,6 +579,7 @@ window.createPass = async () => {
     const d = await api("/passes", { method: "POST", body: {
       event_id: $("#npEvent").value, name: $("#npName").value, phone: $("#npPhone").value,
       group: $("#npGroup").value, zone_id: $("#npZone").value || null, pass_no: $("#npPassNo").value,
+      profile_id: $("#npProfile").value || null, members: $("#npMembers").value || 1,
     }});
     closeModal(); toast("Pass created: " + d.pass.passNo);
     loadPasses();
@@ -587,15 +600,16 @@ $("#bulkBtn").addEventListener("click", () => {
   const zopts = `<option value="">No zone</option>` + zones.map((z) => `<option value="${z.id}">${z.name}</option>`).join("");
   openModal(`<h3>Bulk Import Passes</h3>
     <div class="f"><label>Event</label><select id="biEvent">${eopts}</select></div>
-    <div class="f"><label>Zone (optional)</label><select id="biZone">${zopts}</select></div>
-    <div class="f"><label>Lines — format: <code>name, phone, group, note</code></label>
+    <div class="f"><label>Access profile</label><select id="biProfile"><option value="">— none (set later) —</option>${(window.profilesAll || []).map((x) => `<option value="${x.id}">${x.name}</option>`).join("")}</select></div>
+    <div class="f"><label>Home zone (optional)</label><select id="biZone">${zopts}</select></div>
+    <div class="f"><label>Lines — format: <code>name, phone, group, note, people</code></label>
     <textarea id="biText" rows="8" placeholder="Ali Raza, 9876543210, Family A&#10;Fatema M, 9123456780, Jamat B"></textarea></div>
     <div class="flex"><button class="btn" onclick="bulkImport()">Import</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>`);
 });
 window.bulkImport = async () => {
   try {
     const d = await api("/passes/bulk", { method: "POST", body: {
-      event_id: $("#biEvent").value, zone_id: $("#biZone").value || null, text: $("#biText").value } });
+      event_id: $("#biEvent").value, zone_id: $("#biZone").value || null, profile_id: $("#biProfile").value || null, text: $("#biText").value } });
     closeModal(); toast("Imported: " + d.created + " passes");
     loadPasses();
   } catch (err) { toast(err.message, true); }
@@ -646,6 +660,7 @@ $("#actRefresh").addEventListener("click", loadActivity);
   } catch { logout(); }
 })();
 </script>
+<script src="/assets/admin-ext.js"></script>
 <script src="/assets/app-install.js"></script>
 </body>
 </html>
